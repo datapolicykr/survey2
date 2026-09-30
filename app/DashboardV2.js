@@ -1,85 +1,16 @@
 'use client';
-
-import { useEffect, useState } from 'react';
-
-export default function DashboardV2() {
-  const [active, setActive] = useState(false);
-  const [rows, setRows] = useState([]);
-  const [rep, setRep] = useState('');
-
-  async function load() {
-    try {
-      const response = await fetch('/api/surveys', { cache: 'no-store' });
-      const data = await response.json();
-      setRows(Array.isArray(data) ? data : []);
-    } catch {
-      setRows([]);
-    }
-  }
-
-  useEffect(() => {
-    const checkTab = () => {
-      const button = document.querySelector('.tabs button:nth-child(3)');
-      setActive(Boolean(button && button.classList.contains('on')));
-    };
-    checkTab();
-    load();
-    document.addEventListener('click', checkTab);
-    return () => document.removeEventListener('click', checkTab);
-  }, []);
-
-  if (!active) return null;
-
-  const reps = Array.from(new Set(rows.map((row) => row.sales_rep).filter(Boolean))).sort();
-  const data = rep ? rows.filter((row) => row.sales_rep === rep) : rows;
-
-  function downloadCsv() {
-    const columns = ['dentist_name', 'region', 'district', 'van_company', 'current_pms', 'sales_rep', 'contract_end_date'];
-    const quote = (value) => '"' + String(value ?? '').replaceAll('"', '""') + '"';
-    const lines = [columns, ...data.map((row) => columns.map((key) => row[key]))];
-    const text = '\ufeff' + lines.map((line) => line.map(quote).join(',')).join('\r\n');
-    const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `VAN_설문_${rep || '전체'}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
-  const box = { border: '1px solid #ddd', borderRadius: 10, padding: 14, background: '#fff' };
-  const control = { border: '1px solid #ccc', borderRadius: 7, padding: '8px 10px', background: '#fff' };
-
-  return (
-    <section style={{ width: 'min(1180px, calc(100vw - 30px))', margin: '-760px auto 40px', position: 'relative', zIndex: 20, background: '#fff', minHeight: 760, padding: 20, boxSizing: 'border-box', fontFamily: 'Arial, Malgun Gothic, sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-        <div>
-          <h2 style={{ margin: 0 }}>VAN 설문 대시보드</h2>
-          <small>V2 전용 DB 실시간 연동</small>
-        </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <select style={control} value={rep} onChange={(event) => setRep(event.target.value)}>
-            <option value="">전체 영업사원</option>
-            {reps.map((name) => <option key={name} value={name}>{name}</option>)}
-          </select>
-          <button style={control} type="button" onClick={downloadCsv}>엑셀 내려받기</button>
-          <a style={{ ...control, color: '#222', textDecoration: 'none' }} href="/admin">Admin</a>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, margin: '18px 0' }}>
-        <div style={box}><small>총 조사</small><b style={{ display: 'block', fontSize: 28 }}>{data.length}</b></div>
-        <div style={box}><small>영업사원</small><b style={{ display: 'block', fontSize: 28 }}>{rep ? 1 : reps.length}</b></div>
-        <div style={box}><small>지역</small><b style={{ display: 'block', fontSize: 28 }}>{new Set(data.map((row) => row.region).filter(Boolean)).size}</b></div>
-        <div style={box}><small>약정정보</small><b style={{ display: 'block', fontSize: 28 }}>{data.filter((row) => row.contract_end_date).length}</b></div>
-      </div>
-
-      <h3>공략 리스트</h3>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-          <thead><tr>{['치과명', '지역', 'VAN', 'PMS', '영업사원', '약정만료'].map((label) => <th key={label} style={{ padding: 8, background: '#f3f3f3', borderBottom: '1px solid #ddd' }}>{label}</th>)}</tr></thead>
-          <tbody>{data.map((row) => <tr key={row.id}><td style={{ padding: 8 }}>{row.dentist_name}</td><td style={{ padding: 8 }}>{row.region} {row.district}</td><td style={{ padding: 8 }}>{row.van_company}</td><td style={{ padding: 8 }}>{row.current_pms}</td><td style={{ padding: 8 }}>{row.sales_rep}</td><td style={{ padding: 8 }}>{row.contract_end_date || '-'}</td></tr>)}</tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
+import {useEffect,useMemo,useState} from 'react';
+import {createPortal} from 'react-dom';
+import AdminV2 from './AdminV2';
+const n=v=>Number(String(v||'').replace(/[^0-9.-]/g,''))||0;
+const a=v=>Array.isArray(v)?v:[];
+const diff=ym=>{const m=/^(\d{4})-(\d{2})/.exec(ym||'');if(!m)return 999;const d=new Date();return(Number(m[1])-d.getFullYear())*12+Number(m[2])-d.getMonth()-1};
+export default function DashboardV2(){const[mount,setMount]=useState(null),[rows,setRows]=useState([]),[rep,setRep]=useState('');
+ const load=async()=>{const r=await fetch('/api/surveys',{cache:'no-store'});if(r.ok)setRows(await r.json())};
+ useEffect(()=>{let node;const find=()=>{const old=document.querySelector('.tab3');if(old&&!node){old.style.display='none';node=document.createElement('div');old.after(node);setMount(node);load()}};find();const o=new MutationObserver(find);o.observe(document.body,{childList:true,subtree:true});return()=>{o.disconnect();node?.remove()}},[]);
+ const reps=useMemo(()=>[...new Set(rows.map(x=>x.sales_rep).filter(Boolean))].sort((x,y)=>x.localeCompare(y,'ko')),[rows]);const data=rep?rows.filter(x=>x.sales_rep===rep):rows;
+ const regions=Object.entries(data.reduce((o,x)=>(o[x.region]=(o[x.region]||0)+1,o),{})).sort((x,y)=>y[1]-x[1]);const exp=k=>data.filter(x=>{const d=diff(x.contract_end_date);return d>=0&&d<=k}).length;
+ const csv=()=>{const H=['치과명','지역','구군','VAN','PMS','영업사원','약정만료','월사용료','관리비','연동비','불편사항','개선항목'],B=data.map(x=>[x.dentist_name,x.region,x.district,x.van_company,x.current_pms,x.sales_rep,x.contract_end_date,x.monthly_cost,x.management_fee,x.link_fee,a(x.inconveniences).join('|'),a(x.improvement_items).join('|')]),q=v=>'"'+String(v??'').replaceAll('"','""')+'"',blob=new Blob(['\ufeff'+[H,...B].map(r=>r.map(q).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`VAN_상담대상_${rep||'전체'}.csv`;link.click();URL.revokeObjectURL(link.href)};
+ if(!mount)return null;const S={card:{background:'#fff',border:'2px solid #e1e5e8',borderRadius:12,padding:16},btn:{border:'2px solid #cfd4d9',background:'#fff',borderRadius:8,padding:'10px 22px',fontWeight:700,cursor:'pointer'},td:{padding:'8px',borderBottom:'1px solid #eee',fontSize:12}};
+ const hot3=exp(3), compare=data.filter(x=>a(x.improvement_items).length).length, prep=data.filter(x=>a(x.inconveniences).length).length;
+ return createPortal(<div className="dashboard-v2" style={{width:'min(960px,100%)',minHeight:1180,margin:'0 auto',padding:'70px 32px 35px',background:'#fff',position:'relative',fontFamily:'Arial,"Malgun Gothic",sans-serif'}}><div className="tag">대시 보드</div><div className="brand">OSSTEM</div><h1 style={{fontSize:28,margin:'5px 20px 30px'}}>설문 실적과 약정 만료 영업기회를 한 화면에서 확인합니다.</h1><div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><select style={S.btn} value={rep} onChange={e=>setRep(e.target.value)}><option value="">전체 영업사원</option>{reps.map(x=><option key={x}>{x}</option>)}</select><button style={S.btn} onClick={csv}>↓ 엑셀 내려받기</button><AdminV2 onChanged={load}/></div><div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}}>{[['총 조사',data.length],['이번 달 조사',data.length],['3개월 내 만료',hot3],['즉시 비교안 희망',compare],['준비 확인 필요',prep]].map(([l,v],i)=><div style={{...S.card,...(i===2||i===3?{borderColor:'#ffb18b',background:'#fffaf7'}:{})}} key={l}><b style={{display:'block',color:i===2||i===3?'#f4511e':'#718096'}}>{l}</b><strong style={{fontSize:34,display:'inline-block',marginTop:17,color:i===2||i===3?'#f4511e':'#111'}}>{v}</strong><span style={{marginLeft:10,color:'#718096'}}>건</span></div>)}</div><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:40,marginTop:20}}><section style={S.card}><h2 style={{fontSize:18,margin:0}}>⌖ 지역별 조사 현황 <small style={{float:'right',color:'#718096'}}>총 {data.length}건</small></h2><div style={{padding:'20px 5px'}}>{regions.slice(0,8).map(([r,c])=><div key={r} style={{display:'flex',alignItems:'center',gap:8,margin:'12px 0'}}><b style={{width:45}}>{r}</b><span style={{flex:1,height:13,background:'#eef1f3',borderRadius:9}}><i style={{display:'block',height:'100%',borderRadius:9,background:'#ff641c',width:`${c/Math.max(1,...regions.map(x=>x[1]))*100}%`}}/></span><strong style={{color:'#f4511e'}}>{c}</strong></div>)}</div></section><section style={S.card}><h2 style={{fontSize:18,margin:0}}>▥ 약정 만료 파이프라인 <small style={{float:'right',color:'#718096'}}>향후 12개월</small></h2><div style={{height:230,display:'flex',alignItems:'flex-end',justifyContent:'space-around',borderBottom:'1px solid #ccc',padding:'20px'}}>{[1,2,3,4,5,6].map(m=>{const v=exp(m);return <div key={m} style={{display:'flex',height:'100%',flexDirection:'column',justifyContent:'flex-end',alignItems:'center'}}><b>{v}</b><i style={{display:'block',width:38,height:`${Math.max(3,v*10)}px`,background:'#ff641c',borderRadius:'6px 6px 0 0'}}/><small>{m}개월</small></div>})}</div><div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:4,marginTop:10}}>{[[3,exp(3)],[6,exp(6)],[12,exp(12)]].map(([m,v])=><div key={m} style={{border:'1px solid #eee',borderRadius:8,padding:10,fontWeight:700}}>{m===3?'3개월 이내':m===6?'3~6개월':'6~12개월'}<strong style={{display:'block',fontSize:25,marginTop:7}}>{v}건</strong></div>)}</div></section></div><section style={{...S.card,marginTop:25}}><h2 style={{fontSize:18,margin:0}}>◎ 공략 리스트 <small style={{float:'right',color:'#f4511e'}}>만료 임박순　전체 목록 보기 →</small></h2><table style={{width:'100%',borderCollapse:'collapse',marginTop:10,fontSize:12}}><thead><tr>{['No.','치과 / 지역','만료','현재 VAN','월 비용',''].map(h=><th key={h} style={{...S.td,background:'#f0f3f5'}}>{h}</th>)}</tr></thead><tbody>{[...data].sort((x,y)=>(x.contract_end_date||'9999').localeCompare(y.contract_end_date||'9999')).slice(0,5).map((r,i)=><tr key={r.id}><td style={S.td}>{i+1}</td><td style={S.td}><b>{r.dentist_name}</b><small style={{display:'block'}}>{r.region} {r.district}</small></td><td style={S.td}><em style={{background:'#fff1e9',color:'#f4511e',borderRadius:14,padding:5,fontStyle:'normal'}}>{r.contract_end_date||'-'}</em></td><td style={S.td}>{r.van_company}</td><td style={S.td}>{(n(r.monthly_cost)+n(r.management_fee)+n(r.link_fee)).toLocaleString()}</td><td style={S.td}>⋮</td></tr>)}</tbody></table></section></div>,mount)}
