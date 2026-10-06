@@ -10,10 +10,11 @@ draft.proposal={sign_rent_month:1670,sign_rent_total:60000,van:'OOO',paper_total
 draft.contract.expiryUnknown=true;
 let response=await POST(request(draft));assert.equal(response.status,201);
 assert.equal(captured.survey_details.draft.devices.multi.rent,'');
-assert.equal(captured.survey_details.draft.devices.multi.type,'번들');
+assert.equal(captured.survey_details.draft.devices.multi.type,'');
 assert.equal(captured.survey_details.draft.devices.sign.type,'임대');
 assert.equal(captured.survey_details.draft.proposal.sign_rent_month,'1670');
 assert.equal(captured.survey_details.draft.proposal.sign_rent_total,'60000');
 assert.equal(captured.survey_details.draft.contract.expiryUnknown,true);
 response=await POST(request({...draft,contract:{...draft.contract,expiry:'2026-13'}}));assert.equal(response.status,400);
-console.log('PASS: 새 화면 값 및 제안 금액 저장, 번들 공란 보존, 날짜 검증 (실제 DB 기록 없음)');
+response=await POST(request({...draft,devices:{...draft.devices,multi:{...draft.devices.multi,use:true}}}));assert.equal(response.status,400);
+console.log('PASS: 새 화면 값 저장, 미선택 패드 공란, 동시 선택 거부, 날짜 검증 (실제 DB 기록 없음)');
