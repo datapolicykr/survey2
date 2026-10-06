@@ -33,8 +33,8 @@ export function proposalDeviceCost(s,kind,key='rent',period='total'){
  const override=s.proposal?.[`${kind}_${key}_${period}`];
  if(override!==undefined&&override!=='')return amount(override);
  if(PAD_PRICES[kind])return paidPad(s,kind)?PAD_PRICES[kind][period]:'';
- const month=kind==='terminal'?{rent:7000,manage:3000,pms:0}[key]:0;
- return period==='month'?month:month*36;
+ const month=kind==='terminal'?{rent:7000,manage:3000,pms:0}[key]:'';
+ return month===''?'':period==='month'?month:month*36;
 }
 export function calculateComparison(s){
  let gear=0,manage=0,pms=0,etc=0;
