@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {POST} from './api/surveys/route.js';
-import {freshSurvey,updateDevice} from './survey-costs.js';
+import {freshSurvey,updateDevice,updatePms} from './survey-costs.js';
 let captured;
 globalThis.fetch=async(url,options)=>{captured=JSON.parse(options.body);return new Response(null,{status:201})};
 const request=d=>new Request('https://test.invalid/api/surveys',{method:'POST',body:JSON.stringify({draft:d})});
@@ -15,6 +15,10 @@ assert.equal(captured.survey_details.draft.devices.sign.type,'임대');
 assert.equal(captured.survey_details.draft.proposal.sign_rent_month,'1670');
 assert.equal(captured.survey_details.draft.proposal.sign_rent_total,'60000');
 assert.equal(captured.survey_details.draft.contract.expiryUnknown,true);
+response=await POST(request(updatePms(draft,'')));assert.equal(response.status,201);
+assert.equal(captured.survey_details.draft.devices.terminal.pms,'');assert.equal(captured.link_fee,'0');
+response=await POST(request({...draft,devices:{...draft.devices,terminal:{...draft.devices.terminal,use:false}}}));
+assert.equal(response.status,201);assert.equal(captured.link_fee,'15000');
 response=await POST(request({...draft,contract:{...draft.contract,expiry:'2026-13'}}));assert.equal(response.status,400);
 response=await POST(request({...draft,devices:{...draft.devices,multi:{...draft.devices.multi,use:true}}}));assert.equal(response.status,400);
 console.log('PASS: 새 화면 값 저장, 미선택 패드 공란, 동시 선택 거부, 날짜 검증 (실제 DB 기록 없음)');

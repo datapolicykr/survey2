@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
-import {freshSurvey,normalizeSurvey,calculateComparison,updateDevice,proposalDeviceCost} from './survey-costs.js';
+import {freshSurvey,normalizeSurvey,calculateComparison,updateDevice,updatePms,proposalDeviceCost} from './survey-costs.js';
 const initial=freshSurvey();
+const costs=calculateComparison(initial);
+assert.equal(costs.currentBase,540000);assert.equal(costs.osBase,360000);
+assert.equal(costs.paper,30000);assert.equal(costs.pms,540000);assert.equal(costs.ancillary,570000);
+assert.equal(costs.total,1110000);assert.equal(costs.saving,750000);
+const noPms=calculateComparison(updatePms(initial,''));
+assert.equal(noPms.currentBase,costs.currentBase);assert.equal(noPms.ancillary,30000);assert.equal(noPms.total,570000);
+const legacyPms=freshSurvey();legacyPms.devices.etc={use:true,type:'임대',rent:1000,manage:500,pms:2000};
+assert.equal(calculateComparison(legacyPms).etc,54000);assert.equal(calculateComparison(legacyPms).pms,612000);
+assert.equal(calculateComparison(updatePms(legacyPms,0)).pms,0);
 for(const kind of ['multi','sign']){assert.equal(initial.devices[kind].use,false);assert.equal(initial.devices[kind].type,'');assert.equal(proposalDeviceCost(initial,kind),'');}
 let s=updateDevice(initial,'multi','use',true);
 assert.equal(s.devices.multi.type,'번들');assert.equal(s.devices.sign.use,false);assert.equal(s.devices.sign.type,'');
