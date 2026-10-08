@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
-import {freshSurvey,normalizeSurvey,calculateComparison,updateDevice,updatePms,proposalDeviceCost} from './survey-costs.js';
+import {freshSurvey,normalizeSurvey,restoreLocalDraft,calculateComparison,updateDevice,updatePms,proposalDeviceCost} from './survey-costs.js';
 const initial=freshSurvey();
+const previousDraft=freshSurvey();delete previousDraft.costDefaultsVersion;previousDraft.devices.terminal.manage=10000;previousDraft.clinic='기존 입력 치과';previousDraft.overrides={manage:360000,currentBase:720000,total:1290000,osPaper:0};
+const restored=restoreLocalDraft(previousDraft),restoredCosts=calculateComparison(restored);
+assert.equal(restored.devices.terminal.manage,5000);assert.equal(restored.clinic,previousDraft.clinic);assert.equal(restored.overrides.osPaper,0);
+assert.equal(restoredCosts.manage,180000);assert.equal(restoredCosts.currentBase,540000);assert.equal(restoredCosts.total,1110000);assert.equal(restoredCosts.saving,750000);
+assert.equal(normalizeSurvey(previousDraft).devices.terminal.manage,10000);
+assert.equal(restoreLocalDraft({...restored,devices:{...restored.devices,terminal:{...restored.devices.terminal,manage:10000}}}).devices.terminal.manage,10000);
+assert.equal(restoreLocalDraft({...previousDraft,devices:{...previousDraft.devices,terminal:{...previousDraft.devices.terminal,manage:8000}}}).devices.terminal.manage,8000);
 const costs=calculateComparison(initial);
 assert.equal(costs.currentBase,540000);assert.equal(costs.osBase,360000);
 assert.equal(costs.paper,30000);assert.equal(costs.pms,540000);assert.equal(costs.ancillary,570000);

@@ -2,7 +2,7 @@ export const amount = value => Number(String(value ?? '').replace(/[^0-9.-]/g, '
 export const PAD_PRICES = {multi:{month:2500,total:90000},sign:{month:1670,total:60000}};
 export const deviceNames = {terminal:'단말기',multi:'멀티패드',sign:'서명패드',etc:'기타'};
 export function freshSurvey(){
- return {clinic:'',region:'',district:'',contact:'',sales:'',pms:'',devices:{terminal:{use:true,type:'임대',rent:10000,manage:5000,pms:15000},multi:{use:false,type:'',rent:'',manage:'',pms:''},sign:{use:false,type:'',rent:'',manage:'',pms:''},etc:{use:false,type:'',rent:'',manage:'',pms:'',name:''}},paperType:'유상',paperYear:10000,paperUse:true,support:{inquiry:'불편',repair:'불편',visit:'없음'},contract:{van:'NICE',agency:'',term:'3년',expiry:'',cancel:'기기대금 3배',usage:'100건/월'},overrides:{},proposal:{},immediate:false,compliance:false};
+ return {costDefaultsVersion:1,clinic:'',region:'',district:'',contact:'',sales:'',pms:'',devices:{terminal:{use:true,type:'임대',rent:10000,manage:5000,pms:15000},multi:{use:false,type:'',rent:'',manage:'',pms:''},sign:{use:false,type:'',rent:'',manage:'',pms:''},etc:{use:false,type:'',rent:'',manage:'',pms:'',name:''}},paperType:'유상',paperYear:10000,paperUse:true,support:{inquiry:'불편',repair:'불편',visit:'없음'},contract:{van:'NICE',agency:'',term:'3년',expiry:'',cancel:'기기대금 3배',usage:'100건/월'},overrides:{},proposal:{},immediate:false,compliance:false};
 }
 export function normalizeSurvey(saved){
  const initial=freshSurvey();
@@ -14,6 +14,15 @@ export function normalizeSurvey(saved){
   if(!devices[k].type)devices[k].type=devices[k].rent!==''&&devices[k].rent!=null&&amount(devices[k].rent)>0?'임대':'번들';
  }
  return {...initial,...saved,devices,contract:{...initial.contract,...saved.contract},proposal:saved.proposal||{}};
+}
+export function restoreLocalDraft(saved){
+ const s=normalizeSurvey(saved);
+ if(saved?.costDefaultsVersion!==1&&amount(saved?.devices?.terminal?.manage)===10000){
+  s.devices.terminal={...s.devices.terminal,manage:5000};
+  s.overrides={...s.overrides};
+  for(const key of ['manage','currentBase','total'])delete s.overrides[key];
+ }
+ return {...s,costDefaultsVersion:1};
 }
 export function updateDevice(s,kind,key,value){
  const d={...s.devices[kind],[key]:value};
