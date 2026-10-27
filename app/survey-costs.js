@@ -2,7 +2,7 @@ export const amount = value => Number(String(value ?? '').replace(/[^0-9.-]/g, '
 export const PAD_PRICES = {multi:{month:2500,total:90000},sign:{month:1670,total:60000}};
 export const deviceNames = {terminal:'단말기',multi:'멀티패드',sign:'서명패드',etc:'기타'};
 export function freshSurvey(){
- return {costDefaultsVersion:1,clinic:'',region:'',district:'',contact:'',sales:'',pms:'',devices:{terminal:{use:true,type:'임대',rent:10000,manage:5000,pms:15000},multi:{use:false,type:'',rent:'',manage:'',pms:''},sign:{use:false,type:'',rent:'',manage:'',pms:''},etc:{use:false,type:'',rent:'',manage:'',pms:'',name:''}},paperType:'유상',paperYear:10000,paperUse:true,support:{inquiry:'불편',repair:'불편',visit:'없음'},contract:{van:'NICE',agency:'',term:'3년',expiry:'',cancel:'기기대금 3배',usage:'100건/월'},overrides:{},proposal:{},immediate:false,compliance:false};
+ return {costDefaultsVersion:1,clinic:'',region:'',district:'',contact:'',sales:'',pms:'',devices:{terminal:{use:true,type:'임대',rent:10000,manage:5000,pms:15000},multi:{use:false,type:'',rent:'',manage:'',pms:''},sign:{use:false,type:'',rent:'',manage:'',pms:''},etc:{use:false,type:'',rent:'',manage:'',pms:'',name:''}},paperType:'유상',paperYear:10000,paperUse:true,support:{inquiry:'불편',repair:'불편',visit:'없음'},contract:{van:'NICE',agency:'',term:'3년',expiry:'',cancel:'기기대금 3배',usage:'1,000건/월'},overrides:{},proposal:{},immediate:false,compliance:false};
 }
 export function normalizeSurvey(saved){
  const initial=freshSurvey();
