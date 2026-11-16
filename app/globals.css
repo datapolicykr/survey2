@@ -8,3 +8,40 @@
 .dashboard-sheet .pipeline-plot .bar-column{min-width:0}
 .dashboard-sheet .regional svg{max-width:100%}
 @media(max-width:850px){.dashboard-sheet .dashboard-charts{grid-template-columns:minmax(0,1fr)}}
+
+/* Tab 3/4 management dashboards */
+.management-dashboard .sheet-label{min-width:300px}
+.management-dashboard>h1{margin-bottom:28px}
+.management-controls{gap:10px;justify-content:flex-start}
+.management-controls .control-spacer{flex:1}
+.management-dashboard .kpis.four{grid-template-columns:repeat(4,1fr)}
+.management-series{margin-top:18px;padding:20px}
+.dual-series{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-top:18px}
+.dual-series>div{border:1px solid #e4e8eb;border-radius:10px;padding:10px;text-align:center;background:#f8fafb}
+.dual-series>div.current{background:#fff1e7;border-color:#efb38c}
+.series-bars{height:150px;display:flex;align-items:flex-end;justify-content:center;gap:7px;margin:10px 0;border-bottom:1px solid #d5dbe0}
+.series-bars i,.series-bars em{display:block;width:24px;min-height:3px;border-radius:5px 5px 0 0}
+.series-bars i{background:#b6c3d5}.series-bars em{background:#ed6b21}
+.dual-series small{display:block;font-size:12px;color:#66717a;margin-top:3px}
+.management-maps{gap:18px}
+.management-maps .regional svg{height:350px}
+.management-list table{min-width:1050px}
+.management-list th,.management-list td{white-space:nowrap}
+.plan-editor{width:min(1080px,96vw);max-height:92vh;overflow:auto}
+.editor-filters{display:flex;gap:8px;margin:14px 0}
+.editor-filters select{padding:9px 12px;border:1px solid #d8dde1;border-radius:7px}
+.editor-table{overflow:auto;border:1px solid #e1e5e8;border-radius:8px}
+.editor-table table{border-collapse:collapse;width:100%;min-width:950px;font-size:12px}
+.editor-table th,.editor-table td{padding:8px;border-bottom:1px solid #edf0f2;text-align:left}
+.editor-table th{background:#f4f6f8;position:sticky;top:0}
+.editor-table td small{display:block;color:#7a848c;margin-top:3px}
+.editor-table input[type=date]{padding:6px;border:1px solid #d5dadd;border-radius:5px}
+.editor-table button{padding:7px 10px;border:1px solid #d5dadd;background:#fff;border-radius:6px}
+.admin-db-links{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.admin-db-links a{display:inline-block;padding:9px 12px;border:1px solid #ddd5d0;border-radius:8px;text-decoration:none;color:#222;background:#fff;font-weight:700}
+@media(max-width:850px){
+ .management-dashboard .kpis.four{grid-template-columns:repeat(2,1fr)}
+ .dual-series{overflow-x:auto;grid-template-columns:repeat(7,110px)}
+ .management-controls{flex-wrap:wrap}
+ .management-controls .control-spacer{display:none}
+}
