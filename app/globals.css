@@ -45,3 +45,8 @@
  .management-controls{flex-wrap:wrap}
  .management-controls .control-spacer{display:none}
 }
+
+.promotion-target-table{min-width:2600px!important}
+.promotion-target-table th,.promotion-target-table td{white-space:nowrap}
+.promotion-target-table .survey-detail-cell{min-width:180px;white-space:normal;line-height:1.45}
+.promotion-target-table .memo-cell{min-width:240px}
