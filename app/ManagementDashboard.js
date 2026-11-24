@@ -1,23 +1,24 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
 import {KOREA_MAP_PATHS} from './korea-map';
+import {cachedManagementRows,loadManagementRows} from './management-data';
 
 const REGIONS={서울:[368,335],경기:[461,421],인천:[283,421],강원:[640,263],충북:[521,569],충남:[368,656],세종:[427,670],대전:[444,756],전북:[427,915],전남:[317,1145],광주:[342,1044],경북:[665,627],경남:[563,999],대구:[648,785],울산:[725,899],부산:[691,1086],제주:[317,1397]};
 const regionName=v=>String(v||'미입력').replace(/특별자치도|특별자치시|특별시|광역시|도$/g,'').replace('충청북','충북').replace('충청남','충남').replace('전라북','전북').replace('전라남','전남').replace('경상북','경북').replace('경상남','경남');
 const monthKey=(d=new Date())=>{const p=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit'}).formatToParts(d);return p.find(x=>x.type==='year').value+'-'+p.find(x=>x.type==='month').value};
 const shiftMonth=(base,offset)=>{const [y,m]=base.split('-').map(Number);const d=new Date(y,m-1+offset,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
 const latestPlan=(r,prefix)=>[r[prefix+'_1'],r[prefix+'_2'],r[prefix+'_3']].filter(Boolean).sort().at(-1)||'';
-const nextPlan=(r,prefix)=>[r[prefix+'_1'],r[prefix+'_2'],r[prefix+'_3']].filter(Boolean).sort().find(x=>x>=new Date().toISOString().slice(0,10))||latestPlan(r,prefix);
+const nextPlan=(r,prefix,today=new Date().toISOString().slice(0,10))=>[r[prefix+'_1'],r[prefix+'_2'],r[prefix+'_3']].filter(Boolean).sort().find(x=>x>=today)||latestPlan(r,prefix);
 const csv=v=>'"'+String(v??'').replaceAll('"','""')+'"';
 
 export default function ManagementDashboard({mode='survey',revision=0}){
- const [rows,setRows]=useState([]),[details,setDetails]=useState({}),[loading,setLoading]=useState(true),[error,setError]=useState(''),[filterType,setFilterType]=useState('all'),[scope,setScope]=useState(''),[area,setArea]=useState(''),[editOpen,setEditOpen]=useState(false),[loginOpen,setLoginOpen]=useState(false),[loggedIn,setLoggedIn]=useState(false),[password,setPassword]=useState(''),[message,setMessage]=useState(''),[showAllTargets,setShowAllTargets]=useState(false),[targetPage,setTargetPage]=useState(0);
+ const [rows,setRows]=useState(()=>cachedManagementRows(revision)||[]),[details,setDetails]=useState({}),[loading,setLoading]=useState(()=>!cachedManagementRows(revision)),[error,setError]=useState(''),[filterType,setFilterType]=useState('all'),[scope,setScope]=useState(''),[area,setArea]=useState(''),[editOpen,setEditOpen]=useState(false),[loginOpen,setLoginOpen]=useState(false),[loggedIn,setLoggedIn]=useState(false),[password,setPassword]=useState(''),[message,setMessage]=useState(''),[showAllTargets,setShowAllTargets]=useState(false),[targetPage,setTargetPage]=useState(0);
  const isSurvey=mode==='survey', nowMonth=monthKey();
- async function load(){setLoading(true);setError('');try{const r=await fetch('/api/management',{cache:'no-store'});const d=await r.json();if(!r.ok||!Array.isArray(d))throw Error(d.error||'관리 현황 조회 실패');setRows(d)}catch(e){setError(e.message)}finally{setLoading(false)}}
- useEffect(()=>{load()},[revision]);
+ async function load(){setLoading(true);setError('');try{setRows(await loadManagementRows({revision,force:true}))}catch(e){setError(e.message)}finally{setLoading(false)}}
+ useEffect(()=>{let cancelled=false;setError('');setLoading(!cachedManagementRows(revision));loadManagementRows({revision}).then(d=>{if(!cancelled)setRows(d)}).catch(e=>{if(!cancelled)setError(e.message)}).finally(()=>{if(!cancelled)setLoading(false)});return()=>{cancelled=true}},[revision]);
  const departments=useMemo(()=>[...new Set(rows.map(x=>x.department).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko')),[rows]);
  const reps=useMemo(()=>[...new Set(rows.map(x=>x.sales_rep).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko')),[rows]);
- const filtered=rows.filter(r=>(filterType==='all'||!scope||(filterType==='department'?r.department===scope:r.sales_rep===scope))&&(!area||regionName(r.region)===area));
+ const filtered=useMemo(()=>rows.filter(r=>(filterType==='all'||!scope||(filterType==='department'?r.department===scope:r.sales_rep===scope))&&(!area||regionName(r.region)===area)),[rows,filterType,scope,area]);
  const completed=filtered.filter(r=>isSurvey?r.survey_completed:r.membership_completed).length;
  const kpis=isSurvey?
   [['전체병원',filtered.length],['조사완료',completed],['조사미완',filtered.length-completed],['완료율',filtered.length?Math.round(completed/filtered.length*100)+'%':'0%']]:
@@ -27,7 +28,8 @@ export default function ManagementDashboard({mode='survey',revision=0}){
  const expirySeries=months.map(m=>({month:m,total:filtered.filter(r=>(r.van_contract_end_date||'').slice(0,7)===m).length,joined:filtered.filter(r=>(r.van_contract_end_date||'').slice(0,7)===m&&r.membership_completed).length}));
  const mapCounts=(kind)=>filtered.reduce((a,r)=>{const key=regionName(r.region);const ok=kind==='survey-plan'?!!(r.survey_plan_1||r.survey_plan_2||r.survey_plan_3):kind==='survey-done'?r.survey_completed:kind==='all'?true:r.membership_completed;if(ok)a[key]=(a[key]||0)+1;return a},{});
  const leftMap=mapCounts(isSurvey?'survey-plan':'all'),rightMap=mapCounts(isSurvey?'survey-done':'joined');
- const list=[...filtered].sort((a,b)=>isSurvey?(nextPlan(a,'survey_plan')||'9999').localeCompare(nextPlan(b,'survey_plan')||'9999'):(a.van_contract_end_date||'9999').localeCompare(b.van_contract_end_date||'9999'));
+ const today=new Date().toISOString().slice(0,10);
+ const list=useMemo(()=>filtered.map(row=>({row,key:(isSurvey?nextPlan(row,'survey_plan',today):row.van_contract_end_date)||'9999'})).sort((a,b)=>a.key.localeCompare(b.key)).map(x=>x.row),[filtered,isSurvey,today]);
  const targetPageSize=50;
  const targetPages=Math.max(1,Math.ceil(list.length/targetPageSize));
  const safeTargetPage=Math.min(targetPage,targetPages-1);
