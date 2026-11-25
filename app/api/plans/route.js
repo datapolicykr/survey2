@@ -1,0 +1,2 @@
+import {rpc,hash,cookie} from './access';
+export async function POST(req){try{const b=await req.json();const {r,d}=await rpc('van_v2_save_plan',{p_token_hash:hash(cookie(req)),p_facility_key:b.facility_key,p_patch:b.patch,p_reason:String(b.reason||'').trim().slice(0,300)});return r.ok?Response.json(d):Response.json({error:d?.message==='unauthorized'?'로그인이 필요합니다.':'변경사유와 날짜를 확인해 주세요.'},{status:400})}catch{return Response.json({error:'저장 연결 실패'},{status:502})}}

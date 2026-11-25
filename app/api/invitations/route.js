@@ -1,0 +1,4 @@
+import {randomBytes} from 'crypto';
+import {rpc,hash,cookie} from '../plans/access';
+export async function POST(req){try{const b=await req.json();const token=randomBytes(32).toString('hex');const {r}=await rpc('van_v2_create_invitation',{p_token_hash:hash(cookie(req)),p_facility_key:b.facility_key,p_invitation:token});return r.ok?Response.json({path:'/respond/'+token}):Response.json({error:'로그인 후 링크를 발급해 주세요.'},{status:401})}catch{return Response.json({error:'링크 발급 실패'},{status:502})}}
+export async function GET(req){const token=new URL(req.url).searchParams.get('token')||'';if(!/^[a-f0-9]{64}$/.test(token))return Response.json({error:'유효하지 않은 링크입니다.'},{status:404});const {r,d}=await rpc('van_v2_read_invitation',{p_token:token});return r.ok&&d?Response.json(d,{headers:{'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}}):Response.json({error:'만료되었거나 이미 제출된 링크입니다.'},{status:404})}

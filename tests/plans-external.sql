@@ -1,0 +1,22 @@
+begin;
+do $$ declare c public.van_dental_clinics; tok text:=repeat('a',64); admin text:=gen_random_uuid()::text; staff text:=gen_random_uuid()::text; other_key text; out jsonb; denied boolean:=false; begin
+select * into c from public.van_dental_clinics where assigned_rep_name is not null and assigned_rep_department is not null limit 1;
+insert into public.van_admin_sessions_v2 values(admin,now()+interval '5 minutes');
+perform public.van_v2_staff_account(admin,'test_unique_plan_user',c.assigned_rep_name,c.assigned_rep_department,'Temporary-test-password-932!');
+if not public.van_v2_staff_login('test_unique_plan_user','Temporary-test-password-932!',staff) then raise exception 'staff login failed';end if;
+select facility_key into other_key from public.van_dental_clinics where assigned_rep_name is distinct from c.assigned_rep_name limit 1;
+if public.van_v2_can_manage(staff,other_key) then raise exception 'cross-rep access allowed';end if;
+perform public.van_v2_save_plan(staff,c.facility_key,'{"survey_plan_2":"2026-12-15"}', 'rollback test');
+if not exists(select 1 from public.van_v2_plan_history where facility_key=c.facility_key and actor='test_unique_plan_user') then raise exception 'missing history';end if;
+begin perform public.van_v2_save_plan('invalid',c.facility_key,'{}','test'); exception when others then denied=true;end;
+if not denied then raise exception 'unauthorized save allowed';end if;
+perform public.van_v2_create_invitation(staff,c.facility_key,tok);
+if public.van_v2_read_invitation(tok) is null then raise exception 'missing invitation';end if;
+perform public.van_v2_external_submit(tok,'{"devices":[],"survey_details":{"draft":{}},"monthly_cost":"0","management_fee":"0","link_fee":"0","van_company":"","contract_type":"","inconveniences":[],"improvement_items":[]}');
+if public.van_v2_read_invitation(tok) is not null then raise exception 'used token accepted';end if;
+denied=false;
+begin perform public.van_v2_external_submit(tok,'{}'); exception when others then denied=true;end;
+if not denied then raise exception 'duplicate submission allowed';end if;
+if not exists(select 1 from public.van_survey_responses where survey_details->>'facility_key'=c.facility_key and survey_details->>'source'='external') then raise exception 'missing response';end if;
+end $$;
+rollback;

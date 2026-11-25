@@ -1,0 +1,2 @@
+import {rpc,hash,cookie} from '../access';
+export async function POST(req){try{const b=await req.json();const {r}=await rpc('van_v2_staff_account',{p_token_hash:hash(cookie(req)),p_login:b.login,p_rep:b.rep,p_department:b.department,p_password:b.password});return r.ok?Response.json({ok:true}):Response.json({error:'관리자 로그인 여부, 담당자와 부서, 비밀번호 10자 이상을 확인하세요.'},{status:400})}catch{return Response.json({error:'계정 저장 실패'},{status:502})}}

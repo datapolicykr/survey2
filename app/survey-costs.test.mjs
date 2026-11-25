@@ -17,7 +17,7 @@ assert.equal(noPms.currentBase,costs.currentBase);assert.equal(noPms.ancillary,3
 const legacyPms=freshSurvey();legacyPms.devices.etc={use:true,type:'임대',rent:1000,manage:500,pms:2000};
 assert.equal(calculateComparison(legacyPms).etc,54000);assert.equal(calculateComparison(legacyPms).pms,612000);
 assert.equal(calculateComparison(updatePms(legacyPms,0)).pms,0);
-for(const kind of ['multi','sign']){assert.equal(initial.devices[kind].use,false);assert.equal(initial.devices[kind].type,'');assert.equal(proposalDeviceCost(initial,kind),'');}
+assert.equal(initial.devices.multi.use,true);assert.equal(initial.devices.multi.type,'번들');assert.equal(initial.devices.sign.use,false);assert.equal(initial.devices.sign.type,'');assert.equal(proposalDeviceCost(initial,'sign'),'');
 let s=updateDevice(initial,'multi','use',true);
 assert.equal(s.devices.multi.type,'번들');assert.equal(s.devices.sign.use,false);assert.equal(s.devices.sign.type,'');
 s=updateDevice(s,'multi','rent',1000);
@@ -35,6 +35,6 @@ s=updateDevice(s,'multi','use',false);assert.equal(s.devices.multi.type,'');asse
 s=updateDevice(s,'sign','type','번들');assert.equal(s.devices.sign.use,true);assert.equal(s.devices.multi.type,'');
 const legacy=freshSurvey();legacy.devices.multi={use:true,type:'임대',rent:1000};legacy.devices.sign={use:true,type:'임대',rent:2000};
 const migrated=normalizeSurvey(legacy);assert.equal(migrated.devices.multi.use,true);assert.equal(migrated.devices.sign.use,false);assert.equal(migrated.devices.sign.type,'');
-const oldEmpty=freshSurvey();oldEmpty.devices.multi.type='번들';oldEmpty.devices.sign.type='번들';
+const oldEmpty=freshSurvey();oldEmpty.devices.multi.use=false;oldEmpty.devices.multi.type='번들';oldEmpty.devices.sign.type='번들';
 assert.equal(normalizeSurvey(oldEmpty).devices.multi.type,'');assert.equal(normalizeSurvey(oldEmpty).devices.sign.type,'');
 console.log('PASS: 패드 상호 배타 선택, 선택한 쪽만 기본 번들, 단일 계약 형태, 가격/합산, 기존 임시저장 정리');
