@@ -59,3 +59,5 @@
 .management-list-pagination strong{color:#303942;font-size:13px}
 .management-list-pagination button:disabled{opacity:.4;cursor:default}
 .plan-field{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:14px 0}.plan-field input:not([type=checkbox]){padding:10px;max-width:65%}.management-list th:last-child,.management-list td:last-child{min-width:140px}
+
+.management-list td .plan-row-action{font-size:12px;font-weight:400;line-height:1.4;padding:5px 8px;white-space:nowrap}
